@@ -1,0 +1,201 @@
+# Chapter 02. 숫자 맞히기 게임의 구현
+
+- 이번 장에서는 실제로 동작하는 프로그램을 작성하면서, 러스트의 몇 가지 일반적인 개념을 파악해본다.
+- 이 과정에서 `let`, `match`, 메서드, 연관 함수, `crates`의 사용법 등 다양한 개념을 학습한다.
+
+<details>
+<summary>Table of Contents</summary>
+
+- [2-1 새 프로젝트 셋업하기](#2-1-새-프로젝트-셋업하기)
+- [2-2 플레이어가 예측한 값 처리하기](#2-2-플레이어가-예측한-값-처리하기)
+- [2-3 난수 생성하기](#2-3-난수-생성하기)
+
+</details>
+
+---
+
+# 2-1 새 프로젝트 셋업하기
+
+- 다음과 같이 카고를 이용해 새 프로젝트를 생성한다.
+
+```
+> cargo new project2-1
+> cd project2-1
+```
+
+- 이 프로젝트에 생성된 `Cargo.toml` 파일의 내용은 다음과 같다.
+
+```
+[package]
+name = "project2-1"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+```
+
+# 2-2 플레이어가 예측한 값 처리하기
+
+- 숫자 맞히기 게임을 구현하는 첫 번째 단계는 플레이어에게 입력할 값을 묻고 이 입력을 처리한 후, 그 값이 원하는 형태인지를 확인하는 것이다.
+- 먼저, 플레이어에게 예측한 값을 묻는 코드를 작성해보자.
+- `src/main.rs` 파일에 아래의 코드를 작성한다.
+
+```
+use std::io;
+use std::cmp::Ordering;
+use rand::Rng;
+
+fn main() {
+    println!("숫자를 맞혀봅시다!");
+
+    println!("정답이라고 생각하는 숫자를 입력하세요.");
+
+    let mut guess = String::new();
+    io::stdin()
+        .read_line(&mut guess)
+        .expect("입력한 값을 읽지 못했습니다.");
+
+    println!("입력한 값 : {}", guess);
+}
+```
+
+- 먼저, 플레이어가 입력한 값을 읽어와 출력하려면 `io` 라이브러리를 가져와야 한다.
+- 러스트는 모든 프로그램의 프렐류드(Prelude)에서 기본적으로 단 몇 개의 타입을 가져온다.
+- 만일 사용하고자 하는 타입이 프렐류드에 포함되지 않으면 `use` 구문을 이용해 명시적으로 프로그램의 범위로 가져와야 한다.
+- `std::io` 라이브러리는 사용자가 입력한 값을 읽는 기능을 비롯해 여러 가지 유용한 기능을 제공한다.
+
+## 변수에 값 지정하기
+
+- 다음 코드는 사용자에게 입력받은 값을 저장할 공간을 만든다.
+
+```
+let mut guess = String::new();
+```
+
+- `let`은 변수를 생성하는 구문이다.
+- 또 다른 예로 변수는 다음과 같이 선언한다.
+
+```
+let foo = bar;
+```
+
+- 러스트에서 변수는 기본적으로 값을 변경할 수 없다(immutable).
+- 그러나, 다음 예제는 값을 변경할 수 있는 변수를 생성하기 위해 변수명 이전에 `mut` 키워드를 사용했다.
+
+```
+let foo = 5;        // 불변 변수
+let mut bar = 5;    // 가변 변수
+```
+
+- 다시 프로그램으로 돌아가서, `guess` 변수에는 새로운 `String` 타입의 인스턴스를 생성하는 `String::new` 함수의 실행 결과를 바인딩했다.
+- `String`은 표준 라이브러리가 제공하는 문자열 타입으로, 길이 조절이 가능하며 UTF-8 형식으로 인코딩된 텍스트를 표현한다.
+- `::new` 줄에서 사용된 `::` 문법은 `new` 함수가 `String` 타입의 연관 함수(associated function)라는 점을 의미한다.
+- 연관 함수는 특정한 인스턴스가 아니라 타입 자체에 구현된 함수이다.
+- 다른 언어는 이런 메서드를 **정적 메서드(static method)**라고 부르기도 한다.
+- 이 `new` 함수는 새로운 빈 문자열을 생성한다. 러스트를 사용하다 보면 많은 타입이 `new` 함수를 제공하는 것을 볼 수 있는데, 이는 어떤 타입의 새로운 값을 생성하는 함수에 일반적으로 부여하는 이름이기 때문이다.
+- 이제 `io` 함수의 연관 함수인 `stdin` 함수를 호출하면 사용자의 입력 값을 읽을 수 있다.
+
+```
+io::stdin()
+    .read_line(&mut guess)
+    .expect("입력한 값을 읽지 못했습니다.");
+```
+
+- 만일 프로그램의 시작 부분에 `use std::io` 줄을 작성하지 않는다면 이 코드는 `std::io::stdin`과 같이 작성해도 된다.
+- `stdin` 함수는 `std::io::Stdin` 타입의 인스턴스를 리턴한다.
+- 표준 입력 핸들의 `read_line` 메서드를 호출해서 사용자가 입력한 값을 읽어온다.
+- 이때 `&mut guess`라는 인수를 `read_line` 메서드에 전달한다.
+- `read_line` 메서드의 역할은 사용자가 입력한 값을 표준 입력으로 읽어 문자열에 저장한다. 그래서 문자열 인스턴스를 인수로 전달해준다.
+- 또한, `read_line` 메서드는 사용자가 입력한 값으로 문자열의 내용을 변경하기 때문에 **인수로 전달하는 문자열은 변경 가능한 문자열이어야 한다**.
+- 인수에 사용한 `&` 기호는 이 인수가 **참조(reference)** 타입이라는 점을 지시한다.
+- 즉, 프로그램의 다른 곳에서도 해당 데이터를 여러 번 메모리에 복사할 필요 없이 접근할 수 있다는 것을 의미한다.
+- 변수와 마찬가지로 **참조 역시 기본적으로 변경할 수 없다는 점**을 알아두자.
+- 그래서 변경 가능한 참조를 전달하기 위해 `&guess`가 아니라 `&mut guess`로 표기해야 한다.
+
+## `Result` 타입을 이용해 잠재적인 오류 처리하기
+
+```
+.expect("입력한 값을 읽지 못했습니다.");
+```
+
+- 앞서 설명했듯이 `read_line` 메서드는 사용자가 입력한 값을 우리가 전달한 문자열에 대입하지만, `io::Result` 타입의 값을 리턴하기도 한다.
+- 러스트는 표준 라이브러리 안에 범용의 `Result` 타입을 비롯해 `io::Result`와 같이 서브 모듈 전용의 `Result` 타입 등 여러 개의 `Result` 타입을 정의하고 있다.
+- `Result` 타입은 **열거자(enumerations)**로, 줄여서 `enums`라고 표기하기도 한다.
+- `Result` 열거자의 경우, 열것값은 `Ok`와 `Err`가 있다.
+- `Result` 타입의 목적은 에러 처리를 위한 정보를 인코딩하기 위한 것이다.
+- 다른 타입의 값과 마찬가지로 `Result` 타입의 값은 각자 자신에게 정의된 메서드를 포함하고 있다.
+- 만일 `expect` 메서드를 호출하지 않는다면 프로그램이 컴파일은 되지만, 다음과 같은 경고 메시지가 나타난다.
+
+```
+warning: unused `Result` that must be used
+ --> src/main.rs:8:5
+  |
+8 |     io::stdin().read_line(&mut guess);
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this `Result` may be an `Err` variant, which should be handled
+  = note: `#[warn(unused_must_use)]` on by default
+help: use `let _ = ...` to ignore the resulting value
+  |
+8 |     let _ = io::stdin().read_line(&mut guess);
+  |     +++++++
+```
+
+- 러스트는 `read_line` 메서드가 리턴하는 `Result`를 사용하지 않으면 프로그램이 발생 가능한 에러를 제대로 처리하지 않는다는 경고 메시지를 출력한다.
+
+## `println!` 자리지정자를 이용해 값 출력하기
+
+```
+println!("입력한 값 : {}", guess);
+```
+
+- 이 코드는 사용자의 입력을 저장한 문자열을 출력한다.
+- 여기서 사용한 중괄호({})는 **자리 지정자(placeholder)**라고 부른다.
+
+# 2-3 난수 생성하기
+
+- 러스트의 표준 라이브러리는 난수를 추출하는 기능을 제공하지 않는다.
+- 하지만 러스트 팀은 이런 기능을 위해 `rand` 크레이트를 제공한다.
+
+## 크레이트를 이용해 필요한 기능 추가하기
+
+- 크레이트는 소스 파일의 집합이라는 점을 기억하자.
+- 작업 중인 프로젝트도 실행이 가능한 **바이너리 크레이트(binary crate)**다.
+- `rand` 크레이트를 사용하는 코드를 작성하기에 앞서, 먼저 `Cargo.toml` 파일을 수정해서 `rand` 크레이트를 의존 패키지로 등록해 주어야 한다.
+- `[dependencies]` 섹션 제목 아래에 다음의 코드를 추가하자.
+
+```
+[dependencies]
+rand = "0.6.1"
+```
+
+- `Cargo.toml` 파일 내에서 헤더 다음에 작성하는 내용들은 다른 섹션의 헤더를 만나기 전까지는 해당 섹션에 속한다.
+- `[dependencies]` 섹션에는 프로그램에 필요한 외부 크레이트의 종류와 버전을 카고에게 알려준다.
+- 예제에서는 `rand` 크레이트와 함께 **시맨틱 버전(semantic version)** 식별자인 `0.6.1`을 지정했다.
+- `0.6.1`이라는 버전은 사실 `^0.6.1`의 약식 표기이다.
+- 이 표기는 **버전 `0.6.1`의 공개 API와 호환되는 모든 버전**을 의미한다.
+- 아래는 `rand` 크레이트를 의존 패키지로 추가한 후 `cargo build` 명령의 실행 결과이다.
+
+```
+   Compiling autocfg v1.1.0
+   Compiling rand_core v0.4.2
+   Compiling libc v0.2.147
+   Compiling rand_core v0.3.1
+   Compiling autocfg v0.1.8
+   Compiling rand_hc v0.1.0
+   Compiling rand_xorshift v0.1.1
+   Compiling rand_isaac v0.1.1
+   Compiling rand_chacha v0.1.1
+   Compiling rand_pcg v0.1.2
+   Compiling rand v0.6.5
+   Compiling rand_jitter v0.1.4
+   Compiling rand_os v0.1.3
+   Compiling project2-1 v0.1.0 (/Users/toygoon/workspace/rust-lang/Chap02/project2-1)
+    Finished dev [unoptimized + debuginfo] target(s) in 2.31s
+```
+
+- 프로그램에 필요한 외부 의존 패키지를 추가하면 카고는 패키지가 등록된 **저장소(registry)**인 `crates.io`로부터 가장 최신 버전의 복사본을 내려받는다.
+- `crates.io`는 러스트 개발자들이 다른 개발자들을 위한 오픈 소스 러스트 프로젝트들을 등록하는 곳이다.
+- 예제에서는 단 하나의 의존 패키지만을 사용하지만, `rand` 크레이트가 `libc` 크레이트에 의존하고 있기 때문에 `libc` 크레이트의 복사본도 다운로드한다.
