@@ -320,3 +320,4 @@ println!("사용자가 맞혀야 할 숫자 : {}", secret_number);
 ```
 - ㅔ......................................................................
 
+<img width="1267" alt="cargo_doc" src="https://github.com/Toygoon/rust-lang/assets/2356036/d4d216e5-00a1-4e98-a295-c95309b7e2ec">
