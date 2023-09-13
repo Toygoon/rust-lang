@@ -292,6 +292,7 @@ println!("사용자가 맞혀야 할 숫자 : {}", secret_number);
 - 불러온 크레이트의 어떤 함수나 메서드를 호출해야 하는지, 그리고 어떤 특성을 사용해야 하는지 곧바로 알 수는 없다.
 - 여기서 다시 한 번 카고가 빛을 발하는데, `cargo doc --open` 명령은 모든 의존 패키지가 제공하는 문서를 로컬에서 빌드한 후 브라우저를 통해 보여준다. (??????????????????????????????????????????????????????????????????????????????)
 - 아래는 해당 명령을 실행한 예시이다. (???????????????????????????????????????????????????????????????????????)
+
 ```
   Downloaded rand_core v0.5.1
   Downloaded getrandom v0.1.16
@@ -318,6 +319,100 @@ println!("사용자가 맞혀야 할 숫자 : {}", secret_number);
     Finished dev [unoptimized + debuginfo] target(s) in 2.65s
      Opening /home/toygoon/workspace/rust-lang/Chap02/project2-1/target/doc/project2_1/index.html
 ```
+
 - ㅔ......................................................................
 
 <img width="1267" alt="cargo_doc" src="https://github.com/Toygoon/rust-lang/assets/2356036/d4d216e5-00a1-4e98-a295-c95309b7e2ec">
+
+- 지금까지 완성한 코드의 실행 예시는 아래와 같다.
+
+```
+> cargo run
+   Compiling libc v0.2.148
+   Compiling cfg-if v1.0.0
+   Compiling ppv-lite86 v0.2.17
+   Compiling getrandom v0.1.16
+   Compiling rand_core v0.5.1
+   Compiling rand_chacha v0.2.2
+   Compiling rand v0.7.3
+   Compiling project2-1 v0.1.0 (/home/toygoon/workspace/rust-lang/Chap02/project2-1)
+    Finished dev [unoptimized + debuginfo] target(s) in 0.87s
+     Running `target/debug/project2-1`
+숫자를 맞혀봅시다!
+사용자가 맞혀야 할 숫자 : 100
+정답이라고 생각하는 숫자를 입력하세요.
+
+입력한 값 :
+
+> cargo run
+    Finished dev [unoptimized + debuginfo] target(s) in 0.00s
+     Running `target/debug/project2-1`
+숫자를 맞혀봅시다!
+사용자가 맞혀야 할 숫자 : 17
+정답이라고 생각하는 숫자를 입력하세요.
+
+입력한 값 :
+
+```
+
+# 2-4 난수와 사용자의 입력 비교하기
+
+- 코드를 아래와 같이 추가하겠다.
+
+```
+use std::cmp::Ordering;
+
+...
+
+match guess.cmp(&secret_number) {
+    Ordering::Less => println!("입력한 숫자가 작습니다!"),
+    Ordering::Greater => println!("입력한 숫자가 큽니다!"),
+    Ordering::Equal => println!("정답!"),
+}
+```
+
+- 먼저, 새로운 `use` 구문을 살펴보자.
+- 이 구문은 표준 라이브러리로부터 `std::cmp::Ordering` 타입을 로드한다.
+- `Result` 타입과 마찬가지로 `Order` 역시 열거자이며 `Less`와 `Greater`, `Equal` 값 중 하나를 표현한다.
+- 이 세 가지는 두 값을 비교해서 얻을 수 있는 세 가지 결과를 각각 의미한다.
+- 그런 다음에는 `Ordering` 타입을 이용하는 다섯 줄의 코드를 프로그램의 마지막에 추가했다.
+- `cmp` 메서드는 두 개의 값을 비교하며, 비교가 가능한 어떤 값에도 적용할 수 있다.
+- `cmp` 메서드가 두 값을 비교한 결과인 `Ordering` 열것값에따라 적절하게 동작하고자 `match` 표현식을 사용했다.
+- `match` 표현식은 여러 개의 가지(arm)로 구성된다.
+- 각각의 가지는 pattern, 그리고 `match` 표현식의 시작 부분에 주어진 값이 이 패턴과 일치할 때 실행될 코드로 구성된다.
+- 또한, 각각의 가지는 적합한 리턴값과 일치된 표현식을 찾은 경우 `match` 실행을 종료한다.
+
+```
+> cargo build
+   Compiling project2-1 v0.1.0 (/home/toygoon/workspace/rust-lang/Chap02/project2-1)
+error[E0308]: mismatched types
+  --> src/main.rs:19:21
+   |
+19 |     match guess.cmp(&secret_number) {
+   |                 --- ^^^^^^^^^^^^^^ expected `&String`, found `&{integer}`
+   |                 |
+   |                 arguments to this method are incorrect
+   |
+   = note: expected reference `&String`
+              found reference `&{integer}`
+note: method defined here
+  --> /rustc/5680fa18feaa87f3ff04063800aec256c3d4b4be/library/core/src/cmp.rs:775:8
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `project2-1` (bin "project2-1") due to previous error
+```
+
+- 하지만, 코드는 실행되지 않고 위와 같은 에러를 출력한다.
+- 러스트는 타입 추론(type inference) 기능을 지원한다.
+- 변수 `guess`가 `String::new()` 코드를 작성해 `String` 타입이어야 한다는 점을 타입을 지정할 것을 강요하지 않는다.
+- 타입 불일치를 해결하기 위해, `guess` 변수에 타입 지정을 아래와 같이 할 수 있다.
+- 부호 있는 숫자 타입은 `i32`, `i64`가 있고, 부호 없는 숫자 타입은 `u32`, `u64` 등이 있다.
+
+```
+let guess: u32 = guess
+    .trim()
+    .parse()
+    .expect("입력한 값이 올바른 숫자가 아닙니다.");
+```
+
+- 러스트는 위와 같이 `guess` 변수가 보관하던 값을 새로운 변수의 값으로 가려버린다.
