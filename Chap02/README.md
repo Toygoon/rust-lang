@@ -179,6 +179,7 @@ rand = "0.6.1"
 - 아래는 `rand` 크레이트를 의존 패키지로 추가한 후 `cargo build` 명령의 실행 결과이다.
 
 ```
+> cargo build
    Compiling autocfg v1.1.0
    Compiling rand_core v0.4.2
    Compiling libc v0.2.147
@@ -199,3 +200,96 @@ rand = "0.6.1"
 - 프로그램에 필요한 외부 의존 패키지를 추가하면 카고는 패키지가 등록된 **저장소(registry)**인 `crates.io`로부터 가장 최신 버전의 복사본을 내려받는다.
 - `crates.io`는 러스트 개발자들이 다른 개발자들을 위한 오픈 소스 러스트 프로젝트들을 등록하는 곳이다.
 - 예제에서는 단 하나의 의존 패키지만을 사용하지만, `rand` 크레이트가 `libc` 크레이트에 의존하고 있기 때문에 `libc` 크레이트의 복사본도 다운로드한다.
+- `src/main.rs'` 파일을 열어 간단히 파일을 변경한 후, 다시 저장하고 빌드하면 이번에는 두 줄의 출력 결과가 나온다.
+
+```
+> cargo build
+   Compiling project2-1 v0.1.0 (/home/toygoon/workspace/rust-lang/Chap02/project2-1)
+    Finished dev [unoptimized + debuginfo] target(s) in 0.11s
+```
+
+- 이 결과를 통해 알 수 있듯 카고는 `src/main.rs` 파일의 변경 사항만을 빌드한다.
+- 프로젝트에 필요한 의존 패키지는 변경되지 않았으므로, 카도는 이미 다운로드한 패키지를 그대로 사용한다.
+
+### `Cargo.lock` 파일을 이용해 재생산 가능한 빌드 구현하기
+
+- `Cargo.lock` 파일은 최초로 `cargo build` 명령을 실행할 때 생성하며, 조건에 맞는 모든 의존 패키지를 `Cargo.lock` 파일에 기록한다.
+- 그다음부터는 프로젝트를 빌드할 때마다 카고는 `Cargo.lock` 파일이 존재하는지 확인하고 필요한 버전을 다시 확인하는 것이 아니라 이 파일에 기록된 버전을 사용한다.
+- 다른 누군가가 이 코드를 빌드하더라도 매번 같은 결과물을 재생산하는 매커니즘이다.
+
+### 새 버전의 크레이트로 업그레이드하기
+
+- 카고는 `update`라는 명령어로 크레이트를 업데이트할 수 있게 지원한다.
+- 이 명령은 `Cargo.lock` 파일에 명시된 버전을 무시하고 `Cargo.toml` 파일에 지정된 조건에 해당하는 가장 최신 버전을 다시 찾는다.
+- 이 명령이 성공적으로 실행되면, `Cargo.lock` 파일의 버전을 갱신한다.
+- 만일 `rand` 크레이트가 `0.6.2`와 `0.7.0` 두 가지 버전을 출시했다면 `cargo update` 명령을 실행할 때 다음과 같은 결과가 나온다.
+
+```
+> cargo update
+    Updating crates.io index
+    Updating rand v0.6.1 -> v0.6.2
+```
+
+- 만일 `0.7.0`이나 `0.7.x`에 속하는 다른 버전을 사용하고 싶다면 `Cargo.toml` 파일을 다음과 같이 수정한다.
+
+```
+[dependencies]
+rand = "0.7.0"
+```
+
+- 이후, `cargo build` 명령을 실행하면 다음과 같이 크레이트 저장소를 갱신하고 `rand` 크레이트의 새 버전이 요구하는 사항을 다시 평가한다.
+
+```
+> cargo update
+    Updating crates.io index
+    Removing autocfg v0.1.8
+    Removing autocfg v1.1.0
+    Removing bitflags v1.3.2
+      Adding cfg-if v1.0.0
+    Removing cloudabi v0.0.3
+    Removing fuchsia-cprng v0.1.1
+      Adding getrandom v0.1.16
+      Adding ppv-lite86 v0.2.17
+    Updating rand v0.6.5 -> v0.7.3
+    Updating rand_chacha v0.1.1 -> v0.2.2
+    Removing rand_core v0.3.1
+    Removing rand_core v0.4.2
+      Adding rand_core v0.5.1
+    Updating rand_hc v0.1.0 -> v0.2.0
+    Removing rand_isaac v0.1.1
+    Removing rand_jitter v0.1.4
+    Removing rand_os v0.1.3
+    Removing rand_pcg v0.1.2
+    Removing rand_xorshift v0.1.1
+    Removing rdrand v0.4.0
+      Adding wasi v0.9.0+wasi-snapshot-preview1
+    Removing winapi v0.3.9
+    Removing winapi-i686-pc-windows-gnu v0.4.0
+    Removing winapi-x86_64-pc-windows-gnu v0.4.0
+```
+
+## 난수 생성하기
+
+- 이제 `Cargo.toml` 파일에 `rand` 크레이트를 추가했으므로, 난수 생성 코드를 추가하겠다.
+
+```
+use rand::Rng
+
+...
+
+let secret_number = rand::thread_rng().gen_range(1, 101);
+println!("사용자가 맞혀야 할 숫자 : {}", secret_number);
+
+...
+```
+
+- 먼저, `use rand::Rng` 구문을 추가했다.
+- `Rng` 트레이트(trait)는 난수 생성기에 구현된 메서드를 정의하며, 반드시 현재 범위(scope) 내에 선언되어야 한다.
+- `rand::thread_rng` 함수는 난수 생성기를 리턴한다.
+- 이 함수가 리턴하는 생성기는 현재 코드를 실행 중인 스레드 내에 존재하며 운영체제가 지정한 시드(seed) 값을 사용한다.
+- 그런 다음, `gen_range` 메서드를 호출한다.
+- `gen_range`의 파라미터는 `Python`의 `range()` 범위와 유사하게 작용한다.
+- 불러온 크레이트의 어떤 함수나 메서드를 호출해야 하는지, 그리고 어떤 특성을 사용해야 하는지 곧바로 알 수는 없다.
+- 여기서 다시 한 번 카고가 빛을 발하는데, `cargo doc --open` 명령은 모든 의존 패키지가 제공하는 문서를 로컬에서 빌드한 후 브라우저를 통해 보여준다. (??????????????????????????????????????????????????????????????????????????????)
+- 아래는 해당 명령을 실행한 예시이다.
+- 
