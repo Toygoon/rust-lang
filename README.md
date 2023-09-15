@@ -1,6 +1,6 @@
 # rust-lang
 
-<img src="https://github.com/Toygoon/rust-lang/assets/2356036/0f1fe534-7a45-40ba-a658-4b3fb6b8a62d" />
+<img src="https://github.com/Toygoon/rust-lang/assets/2356036/0f1fe534-7a45-40ba-a658-4b3fb6b8a62d" width="626px"/>
 
 > 『The Rust Programming Language』 을 공부하며 기록한 예제 모음
 
