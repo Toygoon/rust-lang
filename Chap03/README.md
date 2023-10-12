@@ -7,7 +7,10 @@
 <summary>Table of Contents</summary>
 
 - [3-1 변수와 가변성](#3-1-변수와-가변성)
-- [3-2 데이터 타입](#3-2-데이터 타입)
+- [3-2 데이터 타입](#3-2-데이터-타입)
+- [3-3 함수](#3-3-함수)
+- [3-4 주석](#3-4-주석)
+- [3-5 흐름 제어](#3-5-흐름-제어)
 
 </details>
 
@@ -310,7 +313,7 @@ warning: `variables` (bin "variables") generated 31 warnings
 error: could not compile `variables` (bin "variables") due to previous error; 31 warnings emitted
 ```
 
-## 함수
+# 3-3 함수
 
 - 러스트 코드는 `snake case`를 사용한다.
 
@@ -323,7 +326,7 @@ Hello, world!
 Another function!
 ```
 
-### 매개변수
+## 매개변수
 
 - 매개변수는 다음과 같이 지정할 수 있다.
 
@@ -333,7 +336,7 @@ fn parameter_function(x: i32, y: i32) {
 }
 ```
 
-### 함수 본문의 구문과 표현식
+## 함수 본문의 구문과 표현식
 
 - 함수 본문은 여러 개의 구문`(statements)`으로 구성되며, 선택적으로 표현식`(expression)`으로 끝나기도 한다.
 - 표현식은 최종 결괏값으로 평가`(evaluate)`된다.
@@ -399,7 +402,7 @@ println!("x : {}, y : {}", x, y);
 x : 5, y : 4
 ```
 
-### 값을 리턴하는 함수
+## 값을 리턴하는 함수
 
 - 리턴할 값의 타입은 화살표 다음에 지정해 주어야 한다.
 - 함수 본문의 실행이 완전히 끝나지 않은 부분에서도 `return` 키워드와 함께 특정한 값을 리턴할 수 있다.
@@ -412,7 +415,7 @@ fn five() -> i32 {
 
 - 세미콜론을 추가하면, 이 표현식이 구문으로 바뀌어 에러가 발생한다.
 
-## 주석
+# 3-4 주석
 
 - 다음은 주석을 사용한 예다.
 
@@ -420,9 +423,11 @@ fn five() -> i32 {
 // Hi
 ```
 
-## 흐름 제어
+---
 
-### if 표현식
+# 3-5 흐름 제어
+
+## if 표현식
 
 - 아래는 `if` 표현식의 예시이다.
 
@@ -534,3 +539,114 @@ error: could not compile `branches` (bin "branches") due to previous error
 
 - 변수는 타입이 반드시 하나여야 하므로 발생하는 오류이다.
 - 러스트는 `number` 변수를 사용하는 모든 코드의 유혀성을 검사하기 위해 컴파일 시점에 `number` 변수의 타입이 무엇인지를 알아야 한다.
+
+## 루프를 이용한 반복
+
+- 러스트는 `loop`, `while`, `for` 등 세 가지 종류의 루프를 제공한다.
+
+### loop을 이용한 반복 실행
+
+- `loop` 키워드는 루프를 중지하라고 명시적으로 설정하지 않는 한, 코드 블록을 무한으로 반복해서 실행한다.
+
+```
+fn main() {
+    loop {
+        println!("loop");
+    }
+}
+```
+
+```
+loop
+loop
+loop
+loop
+loop
+loop
+loop
+loop
+loop
+loop
+loop
+loop
+loop
+loop
+loop
+loop
+loop
+loop
+loop^Cloop
+loop
+loop
+loop
+loop
+```
+
+- 다행히도 러스트는 루프를 탈출하기 위한 더 안정적인 방법을 제공한다.
+- 루프 안에 `break` 키워드를 삽입하면 루프의 실행이 중단된다.
+
+### 루프에서 값 리턴하기
+
+- 루프를 이용하는 방법 중 하나는 스레드가 작업을 완료했는지 여부를 확인하는 등 실패할 가능성이 있는 작업을 재시도하는 경우다.
+- 하지만 작업의 결과를 다른 코드에 전달해야 할 수도 있다.
+- 그러려면 루프를 중단하는 `break` 표현식 다음에 리턴하고자 하는 값을 추가하면 된다.
+- 아래의 예제는 루프 외부로 값이 리턴되어 나머지 코드에서 사용할 수 있따.
+
+```
+fn main() {
+    let mut counter = 0;
+
+    let result = loop {
+        counter += 1;
+
+        if counter == 10 {
+            break counter * 2;
+        };
+    };
+
+    println!("result : {}, counter : {}", result, counter);
+}
+```
+
+```
+> cargo run
+   Compiling loops v0.1.0 (/Users/toygoon/workspace/rust-lang/Chap03/loops)
+    Finished dev [unoptimized + debuginfo] target(s) in 0.10s
+     Running `target/debug/loops`
+result : 20, counter : 10
+```
+
+### while을 이용한 조건 루프
+
+- `while` 루프를 이용하여 조건식의 평가 결과에 따라 루프를 실행할 수 있다.
+
+```
+let mut number = 3;
+
+while number != 0 {
+    println!("{}", number);
+    number -= 1;
+}
+
+println!("Shoot!");
+```
+
+### for를 이용해 컬렉션을 반복 처리하기
+
+- `for` 구문을 이용해 컬렉션 내의 요소들을 반복해서 처리할 수 있다.
+
+```
+let a = [10, 20, 30, 40, 50];
+for i in a.iter() {
+    println!("{}", i);
+}
+```
+
+- 한 숫자에서 다른 숫자 사이에 존재하는 모든 숫자를 생성해주는 `Range` 타입을 사용할 수 있다.
+
+```
+for i in (1..4).rev() {
+    println!("{}", i);
+}
+println!("Shoot!");
+```
