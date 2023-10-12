@@ -421,3 +421,116 @@ fn five() -> i32 {
 ```
 
 ## 흐름 제어
+
+### if 표현식
+
+- 아래는 `if` 표현식의 예시이다.
+
+```
+fn main() {
+    let number = 3;
+
+    if number < 5 {
+        println!("It's true");
+    } else {
+        println!("It's false");
+    }
+}
+```
+
+```
+> cargo run
+   Compiling branches v0.1.0 (/Users/toygoon/workspace/rust-lang/Chap03/branches)
+    Finished dev [unoptimized + debuginfo] target(s) in 0.30s
+     Running `target/debug/branches`
+It's true
+```
+
+- 한 가지 중요한 점은 `if` 문의 조건은 *반드시 불리언 타입 중 하나를 리턴*해야 한다.
+- 조건이 불리언을 리턴하지 않으면 에러가 발생한다.
+
+```
+...
+if number {
+    println!("Hi");
+}
+...
+```
+
+```
+> cargo run
+   Compiling branches v0.1.0 (/Users/toygoon/workspace/rust-lang/Chap03/branches)
+error[E0308]: mismatched types
+  --> src/main.rs:10:8
+   |
+10 |     if number {
+   |        ^^^^^^ expected `bool`, found integer
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `branches` (bin "branches") due to previous error
+```
+
+- Ruby나 JavaScript 같은 언어와 달리 러스트는 불리언이 아닌 값을 불리언으로 자동 변환하지 않는다.
+- 그래서 반드시 `if` 표현식의 조건을 불리언으로 제공해야 한다.
+
+### else if를 이용해 여러 조건을 처리하기
+
+- `else if` 표현식을 추가하면 여러 개의 조건을 처리할 수 있다.
+
+```
+if number % 4 == 0 {
+    println!("It's multiple of four");
+} else if number % 3 == 0 {
+    println!("It's multiple of three");
+} else if number % 2 == 0 {
+    println!("It's multiple of two");
+} else {
+    println!("It's not a multiple of two, three, or four");
+}
+```
+
+- `else if` 표현식을 너무 많이 사용하면 코드가 지저분해 보이므로, 둘 이상의 `else if` 표현식이 필요할 때는 코드를 `refactoring` 해야한다.
+- `match` 표현식을 표현하는 방법은 추후 살펴보도록 한다.
+
+### let 구문에서 if 표현식 사용하기
+
+- `if`는 표현식이므로 `let` 구문 오른쪽에 사용할 수도 있다.
+
+```
+let condition = true;
+let number = if condition {
+    5
+} else {
+    6
+};
+
+println!("number : {}", number);
+```
+
+- 코드 블록의 결과는 마지막 표현식의 값을 평가하며, 숫자 자체도 하나의 표현식이다.
+- 이때 `if` 표현식 전체의 결과는 어떤 코드 블록을 실행하는가에 따라 달라진다.
+- 따라서, `if` 구문의 각 가지가 리턴하는 결과는 모두 같은 타입이어야 한다.
+- 만일 타입이 일치하지 않으면 에러가 발생한다.
+
+```
+> cargo run
+   Compiling branches v0.1.0 (/Users/toygoon/workspace/rust-lang/Chap03/branches)
+error[E0308]: `if` and `else` have incompatible types
+  --> src/main.rs:24:9
+   |
+21 |       let number = if condition {
+   |  __________________-
+22 | |         5
+   | |         - expected because of this
+23 | |     } else {
+24 | |         "six"
+   | |         ^^^^^ expected integer, found `&str`
+25 | |     };
+   | |_____- `if` and `else` have incompatible types
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `branches` (bin "branches") due to previous error
+```
+
+- 변수는 타입이 반드시 하나여야 하므로 발생하는 오류이다.
+- 러스트는 `number` 변수를 사용하는 모든 코드의 유혀성을 검사하기 위해 컴파일 시점에 `number` 변수의 타입이 무엇인지를 알아야 한다.
