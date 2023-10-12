@@ -70,5 +70,5 @@ s.push_str(", world");
 
 println!("{}", s);
 ```
-
+ 
 ## 메모리와 할당
