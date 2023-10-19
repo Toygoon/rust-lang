@@ -70,5 +70,62 @@ s.push_str(", world");
 
 println!("{}", s);
 ```
- 
+
 ## 메모리와 할당
+
+- String literal은 컴파일 시점에 문자열의 내용을 이미 알고 있으므로 텍스트를 최종 실행할 수 있는 형태로 직접 하드코딩 할 수 있다.
+- 그러므로 문자열 리터럴은 빠르고 효율적이다.
+- 하지만 이런 장점은 문자열 리터럴이 불변이라는 사실에서 비롯된다.
+- 안타깝게도 컴파일 시점에 그 길이를 미리 알 수 없거나 프로그램의 실행 중에 길이가 변경되는 문자열은 그 문자열이 사용할 메모리를 바이너리 형태로 미리 변환할 수가 없다.
+- 가변 문자열을 지원하는 `String` 타입은 길이를 조절할 수 있는 텍스트이므로 컴파일 시점에 알 수 없는 내용을 저장하기 위해 힙 메모리에 일정 부분의 메모리를 할당해야 한다.
+- 따라서 두 가지 절차를 거친다.
+
+> - 해당 메모리는 반드시 런타임 시점에 운영체제에 요청해야 한다.
+> - String 타입의 사용이 완료된 후에는 이 메모리를 운영체제에 다시 돌려줄 방법이 필요하다. (free)
+
+- 첫 번째 절차는 개발자가 처리해야 한다.
+- 두 번째 절차는 `GC`가 있는 언어의 경우 개발자가 이를 직접 처리할 필요는 없지만, 그렇지 않은 언어는 메모리를 돌려주는 작업도 개발자가 직접 처리해야 한다.
+- 러스트는 메모리의 할당과 해제를 다른 방식으로 수행한다.
+- 변수에 할당된 메모리는 변수를 소유한 범위(scope)를 벗어나는 순간 자동으로 해제한다.
+- 위의 코드를 통해 범위에 대해 다시 한 번 확인해보자.
+
+```
+{
+    let s = String::from("hello"); // 변수 s는 이 시점부터 유효하다.
+
+    // 변수 s를 이용해 필요한 동작을 수행한다.
+}   // 여기서 범위를 벗어나게 되므로 변수 s는 이제 유효하지 않다.
+```
+
+- 이 예제를 보면 변수 s가 사용하는 메모리를 운영체제로 돌려주기에 매우 적합한 지점이 있다.
+- 변수가 범위를 벗어나면 러스트는 `drop`이라는 이름의 특별한 함수를 호출한다.
+- `drop` 함수는 `String` 타입을 구현한 개발자가 메모리를 해제하는 코드를 작성해 둔 함수다. [(`ManuallyDrop`을 이용한 예시)](https://doc.rust-lang.org/std/string/struct.String.html#representation), [(`ManuallyDrop` 내부 소스 코드)](https://doc.rust-lang.org/stable/src/core/mem/manually_drop.rs.html#50)
+
+### 변수와 데이터가 상호작용하는 방식 : 이동 (Move)
+
+- `String` 타입을 사용하는 코드를 살펴보자.
+
+```
+let s1 = String:from("hello");
+let s2 = s1;
+```
+
+- 두 번째 줄의 코드는 변수 `s1` 값의 복사본을 만들어 변수 `s2` 에 대입할 것으로 예상되지만, 실제로 그렇게 동작하지 않는다.
+- `String` 타입은 문자열 콘텐츠를 저장하고 있는 메모리에 대한 포인터, 길이, 용량 등 세 부분으로 구성된다.
+
+  > A String is made up of three components: a pointer to some bytes, a length, and a capacity. The pointer points to an internal buffer String uses to store its data. The length is the number of bytes currently stored in the buffer, and the capacity is the size of the buffer in bytes. As such, the length will always be less than or equal to the capacity.
+  >
+  > Documentation에서 요소를 직접 확인해볼 수 있다. [(#)](https://doc.rust-lang.org/std/string/struct.String.html#representation)
+
+- 변수 `s1`에 `s2`에 대입하면 `String` 타입의 데이터가 복사된다.
+- 즉, 포인터가 가리키는 힙 메모리의 실제 데이터가 아니라 문자열에 대한 포인터와 길이, 용량이 스택에 복사된다.
+- 실제로 문자열의 복사는 이루어지지 않는다.
+- 문자열이 같이 복사된다면 저장된 데이터가 큰 경우 런타임 성능이 크게 떨어질 것이다.
+- 하지만 실제로는 포인터를 복사하는데, 변수 `s2`와 `s1`이 범위를 벗어나면 두 변수가 모두 같은 메모리를 해제하려고 한다.
+- 이 문제는 '이중 해제 에러(double free error)'라고 하며, 메모리 안전성 버그 중 하나다.
+- 메모리를 두 번 해제하는 것은 메모리의 불순화(corruption)를 일으킨다.
+- 러스트는 할당된 메모리를 복사하는 대신 변수 `s1`이 더 이상 유효하지 않다고 판단하기 때문에 변수 `s1`이 범위를 벗어날 때 메모리를 해제할 필요가 없다.
+- 러스트는 첫 번째 변수를 무효화해버리므로 이 동작은 얕은 복사라고 하지 않고 이동(move)이라고 한다.
+- 이 예제의 경우, 변수 `s1`이 변수 `s2`로 '이동했다'고 표현한다.
+- 러스트는 자동으로 데이터에 대해 '깊은' 복사를 수행하지 않는다.
+- 그래서 런타임 성능 관점에서 볼 때, 모든 자동 복사 작업은 매우 가벼운 작업이다.
