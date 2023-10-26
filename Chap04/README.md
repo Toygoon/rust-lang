@@ -194,4 +194,32 @@ fn makes_copy(some_integer: i32) {
 
 ## 리턴값과 범위
 
-- 
+- 변수의 소유권은 매번 같은 패턴을 따른다.
+- 즉, 값을 변수에 할당하면 소유권이 옮겨진다.
+- 힙 메모리에 저장된 변수의 데이터는 소유권이 다른 변수로 옮겨지지 않았다면 범위를 벗어날 때 `drop` 함수에 의해 제거된다.
+
+```
+// gives_ownership 함수의 리턴값이 변수 s1로 옮겨진다.
+let s1 = gives_ownership();
+// 변수 s2가 범위 내에 생성된다.
+let s2 = String::from("hello");
+// 변수 s2가 takes_and_give_back 함수로 옮겨간 후 리턴값은 변수 s3로 옮겨진다.
+let s3 = takes_and_gives_back(s2);
+
+...
+
+fn gives_ownership() -> String {
+    // gives_ownership 함수의 리턴값은 호출한 함수로 옮겨진다.
+    // 변수 some_string이 범위 내에 생성된다.
+    let some_string = String::from("hello");
+
+    // some_string 변수가 리턴되면 호출한 함수로 옮겨진다.
+    some_string
+}
+
+fn takes_and_gives_back(a_string: String) -> String {
+    // 변수 a_string을 리턴하면 그 값이 호출한 함수로 옮겨진다.
+    a_string
+}
+```
+
