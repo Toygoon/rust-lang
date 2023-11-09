@@ -344,3 +344,10 @@ printf("%d\n", s);
 - 즉, 이 참조가 가리키는 메모리에는 유효하지 않은 `String` 타입의 값이 보관되어 있다.
 - 이 문제를 해결하려면 다음과 같이 `String` 타입을 직접 리턴하는 방법이 있다.
 
+```
+fn no_dangle() -> String {
+    let s = String::from("hello");
+
+    s
+}
+```
