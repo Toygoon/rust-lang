@@ -290,3 +290,57 @@ fn change(some_string: &mut String) {
 > - 데이터에 대한 접근을 동기화할 수 있는 매커니즘이 없을 때
 
 - 데이터 경합은 예측할 수 없는 결과를 유발하며, 런타임에 디버깅하기 힘들다.
+
+## 죽은 참조
+
+- 포인터를 사용하는 언어는 죽은 포인터로 인해 에러가 발생하기 쉽다.
+- 러스트는 죽은 참조가 발생하지 않도록 컴파일러가 보장해준다.
+- 즉, 어떤 데이터에 대한 참조를 생성하면 컴파일러가 해당 데이터에 대한 참조를 실행하기에 앞서 데이터가 범위를 벗어나지 않았는지 확인해 준다.
+- 다음 코드는 죽은 참조가 발생했을 때 컴파일러가 에러를 발생시키는 예시이다.
+
+```
+fn main() {
+    let reference_to_nothing = dangle();
+}
+
+fn dangle() -> &String {
+    let s = String::from("hello");
+
+    &s
+}
+```
+
+```
+error[E0106]: missing lifetime specifier
+ --> src\main.rs:5:16
+  |
+5 | fn dangle() -> &String {
+  |                ^ expected named lifetime parameter
+  |
+  = help: this function's return type contains a borrowed value, but there is no value for it to be borrowed from
+help: consider using the `'static` lifetime
+  |
+5 | fn dangle() -> &'static String {
+  |                 +++++++
+
+For more information about this error, try `rustc --explain E0106`.
+error: could not compile `orphan` (bin "orphan") due to previous error
+```
+
+- 이 에러 메시지는 수명에 대해 언급하고 있다.
+- 수명은 추후 살펴볼 내용이고, 실제 오류는 대여할 값이 존재하지 않는다는 의미이다.
+- 실제로 C언어는 죽은 포인터를 참조해도 컴파일러가 오류를 알려주지 않는다.
+
+```
+char* s = (char*)malloc(sizeof(5));
+sprintf(s, "asdf", 5);
+printf("%s\n", s);
+
+free(s);
+printf("%d\n", s);
+```
+
+- 위의 러스트 코드에서는 변수 `s`가 함수 `dangle` 함수 내에서 생성되었기 때문에 `dangle` 함수의 실행이 종료되는 시점에 변수 `s`의 메모리가 해제된다.
+- 즉, 이 참조가 가리키는 메모리에는 유효하지 않은 `String` 타입의 값이 보관되어 있다.
+- 이 문제를 해결하려면 다음과 같이 `String` 타입을 직접 리턴하는 방법이 있다.
+
