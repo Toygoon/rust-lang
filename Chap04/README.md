@@ -7,6 +7,7 @@
 <summary>Table of Contents</summary>
 
 - [4-1 소유권이란?](#4-1-소유권이란?)
+- [4-2 참조와 대여](#4-2-참조와-대여)
 
 </details>
 
@@ -223,3 +224,69 @@ fn takes_and_gives_back(a_string: String) -> String {
 }
 ```
 
+---
+
+# 4.2 참조와 대여
+
+- 아래의 코드는 다음과 같은 과정을 따른다.
+
+1. `calculate_length` 함수를 호출한다.
+2. 이동할 문자열 변수를 다시 호출자 함수에 리턴해서 받아온다.
+3. `calculate_length` 함수를 호출한 후에도 `String` 변수를 계속 사용할 수 있다.
+
+- 이렇게 값의 소유권을 가져오는 대신, 매개변수로 전달된 객체의 참조를 이용하도록 `calculate_length` 함수를 작성하였다.
+
+```
+fn main() {
+    let s1 = String::from("hello");
+    let len = calculate_length(&s1);
+
+    println!("Length of '{}' is {}", s1, len);
+}
+
+fn calculate_length(s: &String) -> usize {
+    s.len()
+}
+```
+
+- `calculate_length` 함수의 선언부에서는 `String` 대신 `&String`을 사용하여 함수를 호출할 때는 `&s1`과 같이 값을 전달하고 있다.
+- `&` 사용하면 소유권을 가져오지 않고도 값을 참조할 수 있다.
+- `&s1` 문법을 이용하면 변수 `s1`의 값은 읽을 수 있지만 소유권은 가져오지 않는 참조를 생성할 수 있다.
+- 참조는 소유권을 갖지 않기 때문에 참조가 가리키는 값은 참조가 범위를 벗어나더라도 `drop` 함수가 호출되지 않는다.
+- 함수의 시그너처에도 `&`를 이용해 매개변수 `s`의 타입이 참조임을 표현한다.
+- 이처럼 함수 매개변수로 참조를 전달하는 것을 대여(borrowing)라고 한다.
+- 단, 아래와 같이 대여한 변수를 수정하려고 하면 실제로 동작하지 않는다.
+- 변수가 기본적으로 불변인 것처럼, 참조도 기본적으로 불변이다.
+
+```
+fn main() {
+    let s = String::from("hello");
+    change(&s);
+}
+
+fn change(some_string: &String) {
+    some_string.push_str("aaaa");
+}
+```
+
+## 가변 참조
+
+- 아래와 같이 코드를 조금 수정하면 이 에러를 수정할 수 있다.
+
+```
+fn change(some_string: &mut String) {
+    some_string.push_str("aaaa");
+}
+```
+
+- 우선 변수 `s`에 `mut` 키워드를 추가한다.
+- 그런 다음 `&mut s`와 같이 가변 참조를 생성한 후 `some_string: &mut String`과 같이 가변 참조를 전달받으면 된다.
+- 하지만 가변 참조는 오직 한 개만 존재해야 한다.
+- 이러한 제약 덕분에 가변 참조를 제어하면서 사용할 수 있다.
+- 또한 러스트는 race condition과 유사한 data races를 컴파일 시점에 방지할 수 있다.
+
+> - 둘 혹은 그 이상의 포인터가 동시에 같은 데이터를 읽거나 쓰기 위해 접근할 때
+> - 최소한 하나의 포인터가 데이터를 쓰기 위해 사용될 때
+> - 데이터에 대한 접근을 동기화할 수 있는 매커니즘이 없을 때
+
+- 데이터 경합은 예측할 수 없는 결과를 유발하며, 런타임에 디버깅하기 힘들다.
