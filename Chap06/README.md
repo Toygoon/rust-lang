@@ -15,6 +15,7 @@
   - [열거자의 값](#열거자의-값)
   - [`Option` 열거자를 `Null` 값 대신 사용할 때의 장점](#option-열거자를-null-값-대신-사용할-때의-장점)
 - [6-2 `match` 흐름 제어 연산자](#6-2-match-흐름-제어-연산자)
+  - [값을 바인딩하는 패턴](#값을-바인딩하는-패턴)
 
 </details>
 
@@ -169,3 +170,40 @@ fn value_in_cents(coin: Coin) -> u32 {
   }
 }
 ```
+
+## 값을 바인딩하는 패턴
+
+- 특정 정보를 추가하기 위해 `Quarter` 열것값에 `UsState` 열거자를 저장하도록 수정해보자.
+
+```
+#[derive(Debug)]
+enum UsState {
+  Alabama,
+  Alaska,
+}
+
+enum Coin {
+  Penny,
+  Nickel,
+  Dime,
+  Quarter(UsState),
+}
+```
+
+- 이 `state` 변수를 다음과 같이 사용할 수 있다.
+
+```
+fn value_in_cents(coin: Coin) -> u32 {
+  match coin {
+    Coin::Penny => 1,
+    Coin::Nickel => 5,
+    Coin::Dime => 10,
+    Coin::Quarter(state) => {
+      println!("State quarter from {:?}!", state);
+      25
+    },
+  }
+}
+```
+
+- 이제 이 함수를 `value_in_cents(Coin::Quater(UsState::Alaska))`와 같이 호출하면 `coin` 변수는 `Coin::Quarter(UsState::Alaska)` 값을 갖게 된다.
