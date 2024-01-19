@@ -84,29 +84,32 @@ pub fn eat_at_restaurant() {
 - 이러한 예제를 추가하면, 아래와 같은 오류가 발생한다.
 
 ```
-   Compiling restaurant v0.1.0 (C:\Users\Toygoon\workspace\rust-lang\Chap07\restaurant)
-error[E0433]: failed to resolve: could not find `hostring` in `front_of_house`
-  --> src\lib.rs:31:28
+   Compiling restaurant v0.1.0 (/Users/toygoon/workspace/rust-lang/Chap07/restaurant)
+error[E0603]: function `add_to_waitlist` is private
+  --> src/lib.rs:31:37
    |
-31 |     crate::front_of_house::hostring::add_to_waitlist();
-   |                            ^^^^^^^^ could not find `hostring` in `front_of_house`
+31 |     crate::front_of_house::hosting::add_to_waitlist();
+   |                                     ^^^^^^^^^^^^^^^ private function
+   |
+note: the function `add_to_waitlist` is defined here
+  --> src/lib.rs:18:9
+   |
+18 |         fn add_to_waitlist() {}
+   |         ^^^^^^^^^^^^^^^^^^^^
 
-error[E0603]: module `hosting` is private
-  --> src\lib.rs:34:21
+error[E0603]: function `add_to_waitlist` is private
+  --> src/lib.rs:34:30
    |
 34 |     front_of_house::hosting::add_to_waitlist();
-   |                     ^^^^^^^  --------------- function `add_to_waitlist` is not publicly re-exported
-   |                     |
-   |                     private module
+   |                              ^^^^^^^^^^^^^^^ private function
    |
-note: the module `hosting` is defined here
-  --> src\lib.rs:17:5
+note: the function `add_to_waitlist` is defined here
+  --> src/lib.rs:18:9
    |
-17 |     mod hosting {
-   |     ^^^^^^^^^^^
+18 |         fn add_to_waitlist() {}
+   |         ^^^^^^^^^^^^^^^^^^^^
 
-Some errors have detailed explanations: E0433, E0603.
-For more information about an error, try `rustc --explain E0433`.
+For more information about this error, try `rustc --explain E0603`.
 error: could not compile `restaurant` (lib) due to 2 previous errors
 ```
 
@@ -173,3 +176,66 @@ pub fn add_to_waitlist() {}
 ...
 ```
 
+- 먼저, 절대 경로는 모듈 트리의 루트인 `crate` 부터 시작한다.
+- 그 다음 `front_of_house` 모듈은 크레이트 루트 안에 정의되었다.
+- 이는 같은 모듈에 정의된 형제 관계이므로, `eat_at_restaurant` 함수가 `front_of_house` 모듈을 참조할 수 있다.
+- `add_to_waitlist` 함수 또한 `pub` 키워드로 인해 공개 함수가 되었으므로, 부모 모듈이 접근할 수 있어 함수 호출이 이루어진다.
+- 상대 경로를 살펴보면, 맨 처음의 모듈 이름을 제외한 나머지 경로에는 같은 규칙이 적용된다.
+- 상대 경로는 크레이트 루트부터 시작하는 것이 아니라, `front_of_house` 모듈부터 시작한다.
+- `eat_at_restaurant` 함수가 정의된 모듈부터 시작하는 상대 경로 또한 동작한다.
+- `hosting` 모듈과 `add_to_waitlist` 함수는 `pub` 키워드로 인해 공개되었으므로 이 함수의 호출이 유효하게 된다.
+
+## `super`로 시작하는 상대 경로
+
+- 상대 경로는 `super` 키워드를 이용해 부모 모듈부터 시작할 수도 있다.
+- `super` 키워드를 이용하면 나중에 코드를 다른 모듈로 이동해도 수정해야 할 코드를 최소화 할 수 있다.
+
+## 구조체와 열거자 공개하기
+
+- `pub` 키워드는 구조체와 열거자를 공개할 때도 사용할 수 있지만, 만일 구조체를 정의할 때 `pub` 키워드를 사용한다면 구조체가 공개되는 반면 구조체의 필드는 여전히 비공개 상태이다.
+- 이때는 필요에 따라 각 필드를 공개하거나 비공개로 유지하면 된다.
+- 아래 예시는 구조체를 공개하고, 몇 개의 필드는 공개와 비공개 상태가 같이 존재하는 상태이다.
+
+```
+mod back_of_house {
+    pub struct Breakfast {
+        pub toast: String,
+        seasonal_fruit: String,
+    }
+
+    impl Breakfast {
+        pub fn summer(toast: &str) -> Breakfast {
+            Breakfast {
+                toast: String::from(toast),
+                seasonal_fruit: String::from("peach"),
+            }
+        }
+    }
+}
+
+pub fn eat_at_restaurant() {
+    // member field `summer` is mutable
+    let mut meal = back_of_house::Breakfast::summer("black bread");
+    meal.toast = String::from("white bread");
+    println!("I'll order {} toast.", meal.toast);
+
+    // but another member field `seasonal_fruit` is not mutable
+    // meal.seasonal_fruit = String::from("blueberry");
+}
+```
+
+- `seasonal_fruit` 필드는 비공개이므로 `eat_at_restaurant` 함수가 접근할 수 없다.
+- 또한, 구조체는 비공개 필드를 가지므로 구조체의 인스턴스가 생성할 수 있는 공개용 연관 함수를 제공해야 한다.
+- 만일, 구조체에 연관 함수가 없다면 `eat_at_restaurant` 함수는 비공개인 필드를 설정할 수 없으므로 해당 구조체의 인스턴스를 생성할 수 없다.
+- 즉, 구조체에 비공개 필드는 생성자를 통해 초기화되어야 하지만, 생성자가 없다면 이를 초기화할 방법이 없으므로 생성자가 없는 경우 인스턴스가 생성되지 않는다는 의미이다.
+- 반면, 열거자를 공개하면 모든 열것값 또한 공개된다.
+- 아래 예제처럼 `enum` 키워드 앞에 `pub` 키워드만 추가하면 된다.
+
+```
+pub enum Appetizer {
+    Soup,
+    Salad,
+}
+```
+
+- `Appetizier` 열거자를 공개했으므로 `eat_at_restaurant` 함수는 `Soup`과 `Salad` 열것값을 모두 사용할 수 있다.

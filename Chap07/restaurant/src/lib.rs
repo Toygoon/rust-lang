@@ -26,10 +26,43 @@ mod front_of_house {
     }
 }
 
+/*
 pub fn eat_at_restaurant() {
     // absolute path
-    crate::front_of_house::hostring::add_to_waitlist();
+    crate::front_of_house::hosting::add_to_waitlist();
 
     // relative path
     front_of_house::hosting::add_to_waitlist();
+}
+*/
+
+mod back_of_house {
+    pub struct Breakfast {
+        pub toast: String,
+        seasonal_fruit: String,
+    }
+
+    impl Breakfast {
+        pub fn summer(toast: &str) -> Breakfast {
+            Breakfast {
+                toast: String::from(toast),
+                seasonal_fruit: String::from("peach"),
+            }
+        }
+    }
+
+    pub enum Appetizer {
+        Soup,
+        Salad,
+    }
+}
+
+pub fn eat_at_restaurant() {
+    // member field `summer` is mutable
+    let mut meal = back_of_house::Breakfast::summer("black bread");
+    meal.toast = String::from("white bread");
+    println!("I'll order {} toast.", meal.toast);
+
+    // but another member field `seasonal_fruit` is not mutable
+    // meal.seasonal_fruit = String::from("blueberry");
 }
