@@ -13,6 +13,7 @@
 - [7-1 패키지와 크레이트](#7-1-패키지와-크레이트)
 - [7-2 모듈을 이용한 범위와 접근성 제어](#7-2-모듈을-이용한-범위와-접근성-제어)
 - [7-3 경로를 이용해 모듈 트리의 아이템 참조하기](#7-3-경로를-이용해-모듈-트리의-아이템-참조하기)
+  - [`pub` 키워드로 경로 공개하기](#pub-키워드로-경로-공개하기)
 
 </details>
 
@@ -78,5 +79,97 @@ pub fn eat_at_restaurant() {
     // relative path
     front_of_house::hosting::add_to_waitlist();
 }
+```
+
+- 이러한 예제를 추가하면, 아래와 같은 오류가 발생한다.
+
+```
+   Compiling restaurant v0.1.0 (C:\Users\Toygoon\workspace\rust-lang\Chap07\restaurant)
+error[E0433]: failed to resolve: could not find `hostring` in `front_of_house`
+  --> src\lib.rs:31:28
+   |
+31 |     crate::front_of_house::hostring::add_to_waitlist();
+   |                            ^^^^^^^^ could not find `hostring` in `front_of_house`
+
+error[E0603]: module `hosting` is private
+  --> src\lib.rs:34:21
+   |
+34 |     front_of_house::hosting::add_to_waitlist();
+   |                     ^^^^^^^  --------------- function `add_to_waitlist` is not publicly re-exported
+   |                     |
+   |                     private module
+   |
+note: the module `hosting` is defined here
+  --> src\lib.rs:17:5
+   |
+17 |     mod hosting {
+   |     ^^^^^^^^^^^
+
+Some errors have detailed explanations: E0433, E0603.
+For more information about an error, try `rustc --explain E0433`.
+error: could not compile `restaurant` (lib) due to 2 previous errors
+```
+
+- 러스트에서 접근성이 동작하는 방식은 모든 아이템은 기본적으로 비공개다.
+- 부모 모듈의 아이템들은 자식 모듈 안의 비공개 아이템을 사용할 수 없지만, 자식 모듈의 아이템은 부모 모듈의 아이템을 사용할 수 있다.
+
+## `pub` 키워드로 경로 공개하기
+
+- 앞선 예제에 따르면 `hosting` 모듈은 비공개이다.
+- 이를 해결하기 위해, `hosting` 모듈에 `pub` 키워드를 추가해야 한다.
+
+```
+mod front_of_house {
+    pub mod hosting {
+        fn add_to_waitlist() {}
+        fn seat_at_table() {}
+    }
+    ...
+}
+
+pub fn eat_at_restaurant() {
+    // absolute path
+    crate::front_of_house::hostring::add_to_waitlist();
+
+    // relative path
+    front_of_house::hosting::add_to_waitlist();
+}
+
+```
+
+- 하지만, 위의 예제를 컴파일하면 아래와 같은 에러 메시지를 발생한다.
+
+```
+   Compiling restaurant v0.1.0 (C:\Users\Toygoon\workspace\rust-lang\Chap07\restaurant)
+error[E0433]: failed to resolve: could not find `hostring` in `front_of_house`
+  --> src\lib.rs:31:28
+   |
+31 |     crate::front_of_house::hostring::add_to_waitlist();
+   |                            ^^^^^^^^ could not find `hostring` in `front_of_house`
+
+error[E0603]: function `add_to_waitlist` is private
+  --> src\lib.rs:34:30
+   |
+34 |     front_of_house::hosting::add_to_waitlist();
+   |                              ^^^^^^^^^^^^^^^ private function
+   |
+note: the function `add_to_waitlist` is defined here
+  --> src\lib.rs:18:9
+   |
+18 |         fn add_to_waitlist() {}
+   |         ^^^^^^^^^^^^^^^^^^^^
+
+Some errors have detailed explanations: E0433, E0603.
+For more information about an error, try `rustc --explain E0433`.
+error: could not compile `restaurant` (lib) due to 2 previous errors
+```
+
+- 위의 에러 메시지를 참조하면, `add_to_waitlist` 함수가 여전히 비공개이다.
+- 아래의 예제처럼 `add_to_waitlist` 함수에 `pub` 키워드를 추가해서 함수를 공개해보자.
+
+```
+...
+pub fn add_to_waitlist() {}
+...
 ```
 
