@@ -23,6 +23,7 @@
   - [외부 패키지의 사용](#외부-패키지의-사용)
   - [중첩 경로로 `use` 목록을 깔끔하게 유지하기](#중첩-경로로-use-목록을-깔끔하게-유지하기)
   - [글롭 연산자](#글롭-연산자)
+- [7-5 모듈을 다른 파일로 분리하기](#7-5-모듈을-다른-파일로-분리하기)
 
 </details>
 
@@ -364,3 +365,43 @@ use std::io::{self, Write};
 use std::collections::*;
 ```
 
+---
+
+# 7-5 모듈을 다른 파일로 분리하기
+
+- 앞의 예제는 다음과 같이 모듈 분리가 가능하다.
+- 아래는 `front_of_house` 모듈이 `src/lib.rs`에서 사용되는 예시이다.
+
+```
+mod front_of_house;
+
+pub use crate::front_of_house::hosting;
+
+pub fn eat_at_restaurant() {
+    hosting::add_to_waitlist();
+    hosting::add_to_waitlist();
+    hosting::add_to_waitlist();
+}
+```
+
+- `src/front_of_house.rs` 파일에는 아래 예제처럼 `front_of_house` 모듈의 본문을 옮긴다.
+
+```
+pub mod hosting {
+    pub fn add_to_waitlist() {}
+}
+```
+
+- 마찬가지로 `hosting` 모듈의 콘텐츠를 다른 파일로 옮기면 `src/front_of_house` 파일에는 `hosting` 모듈의 선언 부분만 남게 된다.
+
+```
+pub mod hosting;
+```
+
+- 이제 `src/front_of_house` 디렉터리를 생성한 후 `src/front_of_house/hosting.rs` 파일에 `hosting` 모듈의 정의를 옮겨오자.
+
+```
+pub fn add_to_waitlist() {}
+```
+
+- 이렇게 해도 모듈 트리는 같은 형태로 유지되며, `eat_at_restaurant` 함수의 호출은 아무런 문제 없이 실행된다.
