@@ -29,6 +29,8 @@
     - [(2) 바이트와 스칼라값, 그리고 그래핌 클러스터](#2-바이트와-스칼라값-그리고-그래핌-클러스터)
   - [문자열 슬라이스 하기](#문자열-슬라이스-하기)
   - [문자열을 순회하는 메서드](#문자열을-순회하는-메서드)
+- [8-3 키와 값을 저장하는 해시 맵](#8-3-키와-값을-저장하는-해시-맵)
+  - [새로운 해시 맵 생성하기](#새로운-해시-맵-생성하기)
 
 </details>
 
@@ -43,7 +45,7 @@
 - 새로운 빈 벡터를 생성하려면 아래와 같이 `Vec::new` 함수를 호출하면 된다.
 
 ```
-let v: Vec<i32> = Vew::new()
+let v: Vec<i32> = Vec::new();
 ```
 
 - 벡터에는 아직 값을 저장하지 않았으므로, 어떤 값이 저장될지 미리 알 수 없기 때문에 타입에 대한 애노테이션을 사용한다.
@@ -158,7 +160,7 @@ let row = vec![
   SpreadsheetCell::Int(3),
   SpreadsheetCell::Text(String::from("test")),
   SpreadsheetCell::Float(10.12),
-]
+];
 ```
 
 - 러스트는 컴파일 시점에 벡터에 어떤 값이 저장될지 알아야 하므로 어느 정도의 힙 메모리가 필요한지도 정확히 판단한다.
@@ -323,4 +325,43 @@ for b in "안녕하세요".bytes() {
     println!("{}", b);
 }
 ```
+
+---
+
+# 8-3 키와 값을 저장하는 해시 맵
+
+## 새로운 해시 맵 생성하기
+
+- `new` 함수를 이용하면 빈 해시 맵을 생성할 수 있고, `insert` 함수를 이용해 새로운 키와 값을 추가할 수 있다.
+
+```
+use std::collections::HashMap;
+
+let mut scores = HashMap::new();
+
+scores.insert(String::from("Blue"), 10);
+scores.insert(String::from("Yellow"), 50);
+```
+
+- 가장 먼저 `use` 구문을 이용해 표준 라이브러리의 `collections` 부분에서 `HashMap` 타입을 가져와야 한다.
+- 벡터와 마찬가지로 맵은 데이터를 힙 메모리에 저장한다.
+- 예제에서 사용한 `HashMap` 타입은 `String` 타입의 키와 `i32` 타입의 값을 저장한다.
+- 해시 맵을 생성하는 또 다른 방법은 키와 값을 가지고 있는 튜플의 벡터에 대해 `collect` 메서드를 호출하는 방법이다.
+- `collect` 메서드는 해시 맵을 포함한 여러 가지 종류의 컬렉션으로부터 데이터를 수집한다.
+- `zip` 메서드를 이용해 튜플의 벡터를 생성할 수 있다.
+- 그런 다음 이 튜플의 벡터에 `collect` 메서드를 호출해서 해시 맵으로 변환하면 된다.
+
+```
+use std::collections::HashMap;
+
+let teams = vec![String::from("Blue"), String::from("Yellow")];
+let initial_scores = vec![10, 50];
+
+{
+let scores: HashMap<_, _> = teams.iter().zip(initial_scores.iter()).collect();
+}
+```
+
+- `collect` 메서드는 여러 가지 데이터 구조를 생성할 수 있으므로 그 중에 어떤 타입을 생성할 것인지를 명시하기 위해 `HashMap<_, _>` 타입 애노테이션이 필요하다.
+- 하지만 키와 값의 타입 매개변수에 대해서는 밑줄을 사용할 수 있고, 그러면 러스트가 벡터의 데이터 타입을 이용해 키와 값의 타입을 알아서 유추한다.
 
